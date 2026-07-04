@@ -387,11 +387,13 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadApiKey() {
     const defaultKey = 'AQ.Ab8RN6JXj_vShcasVD8pWQoBfBWSILw4Z3x1AIf2skXbO_nNZQ';
     const savedKey = localStorage.getItem('gemini_api_key') || defaultKey;
-    if (savedKey) {
+    if (savedKey && savedKey.startsWith('AIzaSy')) {
         appState.apiKey = savedKey;
         elements.apiKeyInput.value = savedKey;
         updateApiStatus(true);
     } else {
+        appState.apiKey = savedKey;
+        elements.apiKeyInput.value = (savedKey === defaultKey) ? '' : savedKey;
         updateApiStatus(false);
     }
 }
@@ -547,9 +549,15 @@ async function generatePlan() {
     }, 2000);
 
     try {
-        if (appState.apiKey) {
-            // Live Gemini API request
-            appState.mealPlan = await fetchFromGemini();
+        if (appState.apiKey && appState.apiKey.startsWith('AIzaSy')) {
+            try {
+                // Live Gemini API request
+                appState.mealPlan = await fetchFromGemini();
+            } catch (apiErr) {
+                console.warn("Gemini API call failed, falling back to Demo Mode", apiErr);
+                appState.mealPlan = await fetchMockData();
+                showNotification('AI Engine offline. Loaded local culinary simulation.');
+            }
         } else {
             // High fidelity Mock generation
             appState.mealPlan = await fetchMockData();
