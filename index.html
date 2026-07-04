@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChefFlow AI - Intelligent Meal Planner & Cooking To-Do List</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation / Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <svg class="logo-icon" viewBox="0 0 24 24" width="32" height="32">
+                    <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5h-2v-2h2v2zm0-4.5h-2V7h2v6z"/>
+                </svg>
+                <div class="logo-text">
+                    <h1>ChefFlow <span class="accent-text">AI</span></h1>
+                    <p class="tagline">Intelligent Meal Planner & Cooking Assistant</p>
+                </div>
+            </div>
+            
+            <!-- API Key Controls -->
+            <div class="api-key-container">
+                <div class="api-status-badge" id="api-status" style="border: 1px solid rgba(16, 185, 129, 0.4);">
+                    <span class="status-indicator status-online"></span>
+                    <span class="status-label">AI Live Connected</span>
+                </div>
+                <div class="api-input-wrapper hidden">
+                    <input type="password" id="gemini-api-key" placeholder="Enter Gemini API Key..." />
+                    <button class="btn btn-secondary btn-icon" id="toggle-key-visibility" title="Toggle Key Visibility">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    </button>
+                    <button class="btn btn-primary" id="save-api-key">Connect AI</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout: Sidebar & Content Area -->
+        <div class="main-layout">
+            <!-- Sidebar Panel: Inputs -->
+            <aside class="sidebar">
+                <div class="panel-header">
+                    <h2>Custom Preferences</h2>
+                    <p>Configure your perfect daily meal plan</p>
+                </div>
+                
+                <form id="preferences-form" class="preferences-form">
+                    <!-- Diet Preference -->
+                    <div class="form-group">
+                        <label for="pref-diet">Dietary Focus</label>
+                        <select id="pref-diet" class="form-control">
+                            <option value="any">Anything (No restrictions)</option>
+                            <option value="vegetarian" selected>Vegetarian</option>
+                            <option value="vegan">Vegan</option>
+                            <option value="keto">Keto (Low Carb)</option>
+                            <option value="gluten-free">Gluten-Free</option>
+                            <option value="high-protein">High Protein</option>
+                        </select>
+                    </div>
+
+                    <!-- Cuisine Preference -->
+                    <div class="form-group">
+                        <label for="pref-cuisine">Cuisine Style</label>
+                        <select id="pref-cuisine" class="form-control">
+                            <option value="indian" selected>Indian Style</option>
+                            <option value="italian">Italian / Mediterranean</option>
+                            <option value="mexican">Mexican</option>
+                            <option value="asian">Pan-Asian (East Asian)</option>
+                            <option value="continental">Continental / American</option>
+                        </select>
+                    </div>
+
+                    <!-- Budget Input -->
+                    <div class="form-group">
+                        <label for="pref-budget">Daily Budget Limit (INR ₹)</label>
+                        <div class="input-with-addon">
+                            <span class="input-addon">₹</span>
+                            <input type="number" id="pref-budget" class="form-control" value="600" min="200" max="5000" step="50" />
+                        </div>
+                        <span class="form-help">Includes Breakfast, Lunch, & Dinner for the household size</span>
+                    </div>
+
+                    <!-- Servings / Household size -->
+                    <div class="form-group">
+                        <label for="pref-servings">Servings (People count)</label>
+                        <div class="servings-selector">
+                            <button type="button" class="servings-btn" id="servings-dec">-</button>
+                            <input type="number" id="pref-servings" class="form-control servings-val" value="2" min="1" max="10" readonly />
+                            <button type="button" class="servings-btn" id="servings-inc">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients to Exclude -->
+                    <div class="form-group">
+                        <label for="pref-exclude">Ingredients to Avoid / Allergies</label>
+                        <input type="text" id="pref-exclude" class="form-control" placeholder="e.g. peanuts, dairy, mushrooms..." />
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-generate">
+                        <span class="btn-text">Generate AI Meal Plan</span>
+                        <svg class="loading-spinner hidden" viewBox="0 0 50 50">
+                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                        </svg>
+                    </button>
+                </form>
+                
+                <!-- Quick Info Box -->
+                <div class="info-card hidden">
+                    <div class="info-card-icon">💡</div>
+                    <div class="info-card-text">
+                        <p class="title">Demo Mode Active</p>
+                        <p class="desc">No key? No problem! Click generate to use our high-fidelity built-in culinary AI simulations.</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Content Area -->
+            <main class="content-area">
+                <!-- Welcome State (Visible by default, hidden when generated) -->
+                <section class="welcome-section" id="welcome-view">
+                    <div class="welcome-card">
+                        <div class="welcome-icon">🍳</div>
+                        <h2>Create Your AI Cooking Journey</h2>
+                        <p>Generate a customized, budget-conscious meal plan complete with interactive checklists, shopping guides, and swap suggestions.</p>
+                        <div class="features-list">
+                            <div class="feature-item">
+                                <span class="feature-badge">🍽️</span>
+                                <div>
+                                    <h4>Dynamic 3-Meal Planner</h4>
+                                    <p>Recipes curated for breakfast, lunch, and dinner adjusted to your cooking preferences.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-badge">🛒</span>
+                                <div>
+                                    <h4>Categorized Grocery checklist</h4>
+                                    <p>Smart shopping list grouped by categories to streamline your supermarket visit.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-badge">🔄</span>
+                                <div>
+                                    <h4>Intelligent Substitution Hub</h4>
+                                    <p>Need alternatives? Instant substitutes for cost savings, dietary limits, or missing items.</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-badge">💰</span>
+                                <div>
+                                    <h4>Budget Feasibility Analyzer</h4>
+                                    <p>Real-time visual comparison of your estimated recipe costs versus your target budget limit.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-lg" id="btn-quick-start">Quick Start with Vegetarian Plan</button>
+                    </div>
+                </section>
+
+                <!-- Loading State -->
+                <section class="loading-section hidden" id="loading-view">
+                    <div class="loader-box">
+                        <div class="chef-hat-loader">
+                            <span class="bubble"></span>
+                            <span class="bubble"></span>
+                            <span class="bubble"></span>
+                            <div class="pot">
+                                <div class="pot-handle-left"></div>
+                                <div class="pot-body"></div>
+                                <div class="pot-handle-right"></div>
+                            </div>
+                        </div>
+                        <h3>AI Chef is crafting your plan...</h3>
+                        <p id="loading-tip">Optimizing costs, selecting ingredients, and structuring steps...</p>
+                    </div>
+                </section>
+
+                <!-- Dashboard View (Visible when plan loaded) -->
+                <section class="dashboard-section hidden" id="dashboard-view">
+                    <!-- Row 1: Budget Feasibility and Optimization Header -->
+                    <div class="budget-panel card">
+                        <div class="budget-info">
+                            <div class="budget-header">
+                                <h3>Budget Feasibility Analysis</h3>
+                                <span class="badge" id="budget-status-badge">Feasible</span>
+                            </div>
+                            <div class="budget-gauge-wrapper">
+                                <div class="gauge-container">
+                                    <svg class="gauge" viewBox="0 0 100 50">
+                                        <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"></path>
+                                        <path class="gauge-fill" id="gauge-fill-arc" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="125.6" stroke-dashoffset="125.6"></path>
+                                    </svg>
+                                    <div class="gauge-value">
+                                        <span class="cost" id="total-estimated-cost">₹0</span>
+                                        <span class="label">of ₹<span id="target-budget-display">0</span> limit</span>
+                                    </div>
+                                </div>
+                                <div class="budget-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Estimated Daily Cost</span>
+                                        <span class="metric-value text-accent" id="metric-est-cost">₹0</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Cost per Serving</span>
+                                        <span class="metric-value" id="metric-cost-per-serving">₹0</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Remaining Savings</span>
+                                        <span class="metric-value text-green" id="metric-savings">₹0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="budget-tips">
+                            <h4><span class="icon">💡</span> AI Savings & Optimization Tips</h4>
+                            <ul class="tips-list" id="ai-budget-tips">
+                                <!-- Populated dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Tabs and Meal Interactive Cooking Flow -->
+                    <div class="meal-planner-panel card">
+                        <div class="panel-header-tabs">
+                            <div class="title-wrap">
+                                <h3>Cooking To-Do List</h3>
+                                <p>Select a meal to view ingredients and follow step-by-step instructions</p>
+                            </div>
+                            <div class="meal-tabs">
+                                <button class="meal-tab active" data-meal="breakfast">
+                                    <span class="tab-icon">🍳</span>
+                                    <span class="tab-text">Breakfast</span>
+                                </button>
+                                <button class="meal-tab" data-meal="lunch">
+                                    <span class="tab-icon">🍛</span>
+                                    <span class="tab-text">Lunch</span>
+                                </button>
+                                <button class="meal-tab" data-meal="dinner">
+                                    <span class="tab-icon">🍲</span>
+                                    <span class="tab-text">Dinner</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Active Meal Display Panel -->
+                        <div class="active-meal-layout">
+                            <!-- Left: Meal Details & Ingredients Checklist -->
+                            <div class="meal-details-column">
+                                <div class="meal-meta-header">
+                                    <h4 id="meal-title">Loading Meal...</h4>
+                                    <p id="meal-description">Meal summary goes here...</p>
+                                    <div class="meal-stats-badges">
+                                        <span class="stat-badge"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg> <span id="meal-time">30m</span></span>
+                                        <span class="stat-badge"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z"/></svg> Est: <span id="meal-cost">₹150</span></span>
+                                    </div>
+                                </div>
+
+                                <div class="ingredients-list-wrapper">
+                                    <h5>
+                                        <span>Required Ingredients</span>
+                                        <span class="progress-txt" id="ingredients-progress">0/0 gathered</span>
+                                    </h5>
+                                    <!-- Progress Bar -->
+                                    <div class="mini-progress-bar">
+                                        <div class="bar-fill" id="ingredients-bar-fill" style="width: 0%"></div>
+                                    </div>
+                                    
+                                    <ul class="ingredients-checklist" id="meal-ingredients">
+                                        <!-- Dynamically Populated -->
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right: Cooking Steps Flow & Kitchen Timer -->
+                            <div class="cooking-flow-column">
+                                <div class="timer-card">
+                                    <div class="timer-title-wrap">
+                                        <h5>Active Step Timer</h5>
+                                        <span class="active-step-num" id="timer-step-num">Step 1</span>
+                                    </div>
+                                    <div class="timer-display-controls">
+                                        <div class="timer-numbers" id="timer-display">00:00</div>
+                                        <div class="timer-actions">
+                                            <button class="btn btn-secondary btn-icon" id="btn-timer-toggle" title="Start/Pause">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" id="timer-play-icon"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                                                <svg viewBox="0 0 24 24" width="16" height="16" id="timer-pause-icon" class="hidden"><path fill="currentColor" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                            </button>
+                                            <button class="btn btn-secondary btn-icon" id="btn-timer-reset" title="Reset">
+                                                <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <audio id="timer-bell" src="https://assets.mixkit.co/active_storage/sfx/911/911-200.wav" preload="auto"></audio>
+                                </div>
+
+                                <div class="steps-list-wrapper">
+                                    <h5>Cooking Checklist</h5>
+                                    <div class="steps-progress-info">
+                                        <span id="steps-progress-text">0% Complete</span>
+                                        <div class="mini-progress-bar">
+                                            <div class="bar-fill" id="steps-bar-fill" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="steps-container" id="meal-steps">
+                                        <!-- Dynamically Populated Steps -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Grocery List & Substitution Hub (Split Layout) -->
+                    <div class="bottom-split-panel">
+                        <!-- Left: Grocery List -->
+                        <div class="grocery-panel card">
+                            <div class="panel-section-header">
+                                <div>
+                                    <h3>Comprehensive Grocery List</h3>
+                                    <p>Cross off what you already have in your pantry</p>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" id="btn-copy-grocery">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" style="margin-right: 4px;"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                    Copy List
+                                </button>
+                            </div>
+                            <div class="grocery-content" id="grocery-list-container">
+                                <!-- Populated dynamically by categories -->
+                            </div>
+                        </div>
+
+                        <!-- Right: Substitution Hub -->
+                        <div class="substitution-panel card">
+                            <div class="panel-section-header">
+                                <div>
+                                    <h3>Intelligent Substitution Hub</h3>
+                                    <p>Swap ingredients for dietary, budget, or pantry needs</p>
+                                </div>
+                            </div>
+                            <div class="substitution-content">
+                                <div class="sub-search-box">
+                                    <input type="text" id="sub-search-input" placeholder="Search swaps (e.g. eggs, butter, milk)..." />
+                                </div>
+                                <div class="substitution-list" id="substitution-list-container">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+        
+        <!-- App Footer -->
+        <footer class="app-footer">
+            <p>ChefFlow AI &copy; 2026. Your Personal AI Chef & Cooking Companion.</p>
+        </footer>
+    </div>
+
+    <!-- Main Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>
